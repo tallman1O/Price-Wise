@@ -1,6 +1,6 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
-import { extractPrice } from "../utils";
+import { extractCurrency, extractPrice } from "../utils";
 
 export async function scrapeAmazonProduct(url: string) {
   if (!url) return;
@@ -38,7 +38,37 @@ export async function scrapeAmazonProduct(url: string) {
       $(".a-size-base.a-color-price")
     );
 
-    console.log({ title, currentPrice, originalPrice });
+    const outOfStock =
+      $("#availability").text().trim().toLowerCase() ===
+      "currently unavailable";
+
+    const images =
+      $("#imgBlkFront").attr("data-a-dynamic-image") ||
+      $("#landingImage").attr("data-a-dynamic-image") ||
+      "{}";
+
+    const imageURL = Object.keys(JSON.parse(images));
+
+    const currency = extractCurrency($(".a-price-symbol"));
+    const discountRate = $(".savingsPercentage").text().replace(/[-%]/g, "");
+
+    //Construct Data Object with scraped information.
+    const data = {
+      url,
+      currency: currency || "₹",
+      image: imageURL[0],
+      title,
+      currentPrice: Number(currentPrice) || Number(originalPrice),
+      originalPrice: Number(originalPrice) || Number(currentPrice),
+      priceHistory: [],
+      discountRate: Number(discountRate),
+      isOutOfStock: outOfStock,
+      lowestPrice: Number(currentPrice) || Number(originalPrice),
+      highestPrice: Number(originalPrice) || Number(currentPrice),
+      averagePrice: Number(currentPrice) || Number(originalPrice),
+    };
+
+    return data;
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
