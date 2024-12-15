@@ -7,8 +7,6 @@ import { scrapeAmazonProduct } from "../scraper";
 import { getAveragePrice, getHighestPrice, getLowestPrice } from "../utils";
 import { PriceHistoryItem } from "@/types";
 
-
-
 export async function scrapeAndStoreProduct(productURL: string) {
   if (!productURL) return;
 
@@ -23,9 +21,9 @@ export async function scrapeAndStoreProduct(productURL: string) {
       priceHistory: [
         {
           price: scrapedProduct.currentPrice,
-          date: new Date()
-        }
-      ] as PriceHistoryItem[]
+          date: new Date(),
+        },
+      ] as PriceHistoryItem[],
     };
 
     const existingProduct = await Product.findOne({ url: scrapedProduct.url });
@@ -35,8 +33,8 @@ export async function scrapeAndStoreProduct(productURL: string) {
         ...existingProduct.priceHistory,
         {
           price: scrapedProduct.currentPrice,
-          date: new Date()
-        }
+          date: new Date(),
+        },
       ];
 
       product = {
@@ -67,13 +65,21 @@ export async function scrapeAndStoreProduct(productURL: string) {
 export async function getProductById(productId: string) {
   try {
     connectToDB();
-    const product = await Product.findById(productId);
+    const product = await Product.findOne({ _id: productId });
+
+    if (!product) return null;
     return product;
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      throw new Error(`Failed to get product by ID: ${error.message}`);
-    } else {
-      throw new Error("Failed to get product by ID: Unknown error");
-    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function getAllProducts() {
+  try {
+    connectToDB();
+    const products = await Product.find();
+    return products;
+  } catch (error) {
+    console.log(error);
   }
 }

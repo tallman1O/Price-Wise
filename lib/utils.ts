@@ -18,16 +18,20 @@ export function extractPrice(...elements: TextElement[]): string {
   for (const element of elements) {
     const priceText = element.text().trim();
 
-    if(priceText) {
-      const cleanPrice = priceText.replace(/[^\d.]/g, '');
-
-      let firstPrice; 
+    if (priceText) {
+      // Remove all characters except digits, decimal points, and commas
+      const cleanPrice = priceText.replace(/[^\d.,]/g, '');
 
       if (cleanPrice) {
-        firstPrice = cleanPrice.match(/\d+\.\d{2}/)?.[0];
-      } 
+        // Handle comma and decimal formats
+        const normalizedPrice = cleanPrice.replace(/,/g, '');
+        const numericPrice = parseFloat(normalizedPrice);
 
-      return firstPrice || cleanPrice;
+        if (!isNaN(numericPrice)) {
+          // Format the number to avoid extra decimal places
+          return numericPrice.toFixed(2);
+        }
+      }
     }
   }
 
@@ -39,7 +43,6 @@ export function extractCurrency(element: TextElement) {
   const currencyText = element.text().trim().slice(0, 1);
   return currencyText ? currencyText : "";
 }
-
 
 export function getHighestPrice(priceList: PriceHistoryItem[]) {
   let highestPrice = priceList[0];
@@ -93,7 +96,7 @@ export const getEmailNotifType = (
 
 export const formatNumber = (num: number = 0) => {
   return num.toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).replace(/^\D+/g, '');
 };
